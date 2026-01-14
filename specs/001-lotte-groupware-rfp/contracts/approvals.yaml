@@ -1,0 +1,132 @@
+openapi: 3.0.0
+info:
+  title: Approvals API
+  version: 1.0.0
+  description: API for managing electronic approval documents.
+paths:
+  /approvals:
+    get:
+      summary: List Approval Documents
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, IN_PROGRESS, APPROVED, REJECTED]
+      responses:
+        '200':
+          description: A list of approval documents.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Approval'
+    post:
+      summary: Create a new Approval Document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewApproval'
+      responses:
+        '201':
+          description: Approval document created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+
+  /approvals/{approvalId}:
+    get:
+      summary: Get an Approval Document by ID
+      parameters:
+        - name: approvalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The approval document.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+
+  /approvals/{approvalId}/steps:
+    post:
+      summary: Process an Approval Step (Approve/Reject)
+      parameters:
+        - name: approvalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [APPROVE, REJECT]
+                comment:
+                  type: string
+      responses:
+        '200':
+          description: Step processed successfully.
+
+components:
+  schemas:
+    Approval:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        originator:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    NewApproval:
+      type: object
+      required:
+        - title
+        - content
+        - approvalLine
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        formId:
+          type: string
+          format: uuid
+        approvalLine:
+          type: array
+          items:
+            type: object
+            properties:
+              approverId:
+                type: string
+                format: uuid
+              stepOrder:
+                type: integer
